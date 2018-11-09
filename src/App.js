@@ -32,7 +32,7 @@ class App extends Component {
     fetchedTransactions: {},
     fetchInProgress: false,
     pending: null,
-    chain: "kovan",
+    chain: "Loading",
     averageTxs: 0,
     averageGasPrice: hexToBigNum("0x0"),
     // TODO Fetch
@@ -54,11 +54,17 @@ class App extends Component {
 
   refreshBlocks(number) {
     const min = Math.max(0, number - 15);
-    this.fetchBlocks(
-      range(min, number).concat(["pending"]),
-      true
-    ).then(blocks => {
-      const pending = blocks.pop();
+    this.fetchBlocks(range(min, number), true).then(blocks => {
+      const pending = {
+        author: "0x0",
+        hash: "",
+        parentHash: blocks[blocks.length - 1].hash,
+        gasUsed: new BigNumber(0),
+        gasLimit: new BigNumber(1),
+        number: number,
+        timestamp: 0,
+        transactions: []
+      };
       this.setState({
         latestBlockNumber: number,
         blocks,
@@ -279,14 +285,6 @@ class App extends Component {
             <Redirect from="*" to="/" />
           </Switch>
           <Search />
-          <div>
-            <pre style={{ background: "#eee" }}>
-              $ git clone --depth=1 -b built
-              https://github.com/tomusdrw/etherdisplay
-            </pre>
-            Get a local version of the dapp (for private chain).
-            <p />
-          </div>
         </div>
       </Router>
     );
@@ -357,10 +355,12 @@ class App extends Component {
             <tr>
               <th>value</th>
               <td>
-                {tx.value.dividedBy(ether).toFormat(4)} Ξ (${tx.value
+                {tx.value.dividedBy(ether).toFormat(4)} Ξ ($
+                {tx.value
                   .mul(etherPrice)
                   .dividedBy(ether)
-                  .toFormat(5)})
+                  .toFormat(5)}
+                )
               </td>
             </tr>
             <tr>
@@ -376,11 +376,13 @@ class App extends Component {
               <td>
                 {tx.gasPrice.dividedBy(gwei).toFormat(2)} Gwei{" "}
                 <small>
-                  (${tx.gasPrice
+                  ($
+                  {tx.gasPrice
                     .mul(receipt.gasUsed)
                     .mul(etherPrice)
                     .dividedBy(ether)
-                    .toFormat(5)})
+                    .toFormat(5)}
+                  )
                 </small>
               </td>
             </tr>
@@ -500,6 +502,7 @@ class App extends Component {
   }
 
   renderBlock(block, pending = false) {
+    console.log(block, pending);
     if (!block) {
       return null;
     }
