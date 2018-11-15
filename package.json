@@ -12,7 +12,6 @@
     "@parity/parity.js": "^1.8.11",
     "bignumber.js": "^4.0.4",
     "blockies": "^0.0.2",
-    "fsevents": "^1.2.4",
     "lodash": "^4.17.4",
     "normalize.css": "^7.0.0",
     "react": "^16.6.0",
