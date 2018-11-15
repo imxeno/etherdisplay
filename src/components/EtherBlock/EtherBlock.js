@@ -89,7 +89,7 @@ export default class EtherBlock extends PureComponent<Props> {
         <footer>
           <Link to={`/block/${id}`}>
             <p className="transaction">
-              {transactionNo} transactions {pendingText}
+              {pending && <span>{transactionNo} transactions {pendingText}</span>}
             </p>
           </Link>
         </footer>

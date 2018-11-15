@@ -47,6 +47,11 @@ class App extends Component {
     api.pubsub.eth.blockNumber((err, number) => {
       this.refreshBlocks(number);
     });
+    api.parity.pendingTransactions(() => {
+      api.pubsub.eth.blockNumber().then(number => {
+        this.refreshBlocks(number);
+      });
+    });
     api.parity.chain().then(chain => {
       this.setState({ chain });
     });
@@ -55,38 +60,40 @@ class App extends Component {
   refreshBlocks(number) {
     const min = Math.max(0, number - 15);
     this.fetchBlocks(range(min, number), true).then(blocks => {
-      const pending = {
-        author: "0x0",
-        hash: "",
-        parentHash: blocks[blocks.length - 1].hash,
-        gasUsed: new BigNumber(0),
-        gasLimit: new BigNumber(1),
-        number: number,
-        timestamp: 0,
-        transactions: []
-      };
-      this.setState({
-        latestBlockNumber: number,
-        blocks,
-        pending,
-        ...this.getStats(blocks)
-      });
-
-      // update accounts
-      const { fetchedAccounts } = this.state;
-
-      Object.keys(fetchedAccounts).forEach(address => {
-        fetchedAccounts[address].transactions = this.findTransactions(
-          address,
+      this.api.parity.pendingTransactions().then(transactions => {
+        const pending = {
+          author: "0x0",
+          hash: "",
+          parentHash: blocks[blocks.length - 1].hash,
+          gasUsed: new BigNumber(0),
+          gasLimit: new BigNumber(1),
+          number: number.toNumber() + 1,
+          timestamp: 0,
+          transactions: transactions
+        };
+        this.setState({
+          latestBlockNumber: number,
           blocks,
-          pending
-        );
-      });
+          pending,
+          ...this.getStats(blocks)
+        });
 
-      this.setState({
-        fetchedAccounts: {
-          ...fetchedAccounts
-        }
+        // update accounts
+        const { fetchedAccounts } = this.state;
+
+        Object.keys(fetchedAccounts).forEach(address => {
+          fetchedAccounts[address].transactions = this.findTransactions(
+            address,
+            blocks,
+            pending
+          );
+        });
+
+        this.setState({
+          fetchedAccounts: {
+            ...fetchedAccounts
+          }
+        });
       });
     });
   }
@@ -502,7 +509,6 @@ class App extends Component {
   }
 
   renderBlock(block, pending = false) {
-    console.log(block, pending);
     if (!block) {
       return null;
     }
